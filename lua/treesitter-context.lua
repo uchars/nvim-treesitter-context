@@ -532,13 +532,16 @@ end
 --- @field start integer
 
 --- @param win integer
---- @param lnum integer
+--- @param lnum integer?
 --- @param relnum integer?
 --- @param width integer
 --- @return string, StatusLineHighlight[]?
 local function build_lno_str(win, lnum, relnum, width)
   local has_col, statuscol =
     pcall(api.nvim_get_option_value, 'statuscolumn', { win = win, scope = 'local' })
+  if not lnum then
+    return ''
+  end
   if has_col and statuscol and statuscol ~= '' then
     local ok, data = pcall(api.nvim_eval_statusline, statuscol, {
       winid = win,
@@ -673,9 +676,9 @@ local function open(ctx_ranges)
 
     table.insert(context_text, text)
 
-    local ctx_line_num = range[1] + 1
+    local ctx_line_num = vim.wo[win].nu and range[1] + 1 or nil
     local relnum --- @type integer?
-    if vim.wo[win].relativenumber then
+    if vim.wo[win].relativenumber and ctx_line_num then
       relnum = get_relative_line_num(ctx_line_num)
     end
     local txt, hl = build_lno_str(win, ctx_line_num, relnum, gutter_width - 1)
